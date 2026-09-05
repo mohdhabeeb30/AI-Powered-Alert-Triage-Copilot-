@@ -1,0 +1,67 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments and local interpreter artifacts
+venv/
+.venv/
+env/
+env.bak/
+.venv.bak/
+.python-version
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Runtime databases and local application state
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Logs, reports, and generated output
+*.log
+logs/
+reports/
+.pyright/
+
+# OS and editor metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# JavaScript and frontend dependency artifacts
+node_modules/
+
+# Local secrets, credentials, and environment binaries
+credentials.json
+service-account*.json
+*.p12
+*.pfx
+bin/
+lib/
+include/
