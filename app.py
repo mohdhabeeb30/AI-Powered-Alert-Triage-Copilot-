@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from html import escape
 from typing import Any
 
 import requests
@@ -38,20 +39,122 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        .block-container { padding-top: 2rem; padding-bottom: 3rem; }
-        [data-testid="stMetric"] {
-            background: linear-gradient(135deg, #f7fbff 0%, #eef5f8 100%);
-            border: 1px solid #d7e5e9;
-            border-radius: 10px;
-            padding: 1rem;
+        :root {
+            --soc-black: #0A0E17;
+            --soc-panel: #0F172A;
+            --soc-panel-raised: #111C31;
+            --soc-border: #1E293B;
+            --soc-cyan: #00F2FE;
+            --soc-emerald: #10B981;
+            --soc-red: #EF4444;
+            --soc-amber: #F59E0B;
+            --soc-text: #D7E3F4;
+            --soc-muted: #7890AA;
         }
-        .status-banner {
-            border-left: 5px solid #167d8d;
-            background: #edf8f8;
-            border-radius: 6px;
-            padding: 0.8rem 1rem;
-            color: #173f46;
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+            background: var(--soc-black);
+            color: var(--soc-text);
         }
+        .block-container { max-width: 1500px; padding: 2.5rem 3rem 4rem; }
+        [data-testid="stSidebar"] {
+            background: #080C14;
+            border-right: 1px solid var(--soc-border);
+        }
+        [data-testid="stSidebar"] * {
+            font-family: "Courier New", "Lucida Console", monospace;
+        }
+        .stMarkdown, .stCaption, [data-testid="stMetricLabel"],
+        [data-testid="stMetricValue"], [data-testid="stMetricDelta"],
+        textarea, input, button, code, pre, [data-testid="stJson"] {
+            font-family: "Courier New", "Lucida Console", monospace !important;
+        }
+        .stMarkdown, [data-testid="stText"], label, p, li {
+            color: var(--soc-text);
+        }
+        h1, h2, h3 { letter-spacing: 0.06em; color: #F4F8FF; }
+        h1 { text-transform: uppercase; text-shadow: 0 0 22px rgba(0, 242, 254, 0.22); }
+        [data-testid="stTabs"] [role="tablist"] {
+            gap: 0.4rem;
+            border-bottom: 1px solid var(--soc-border);
+        }
+        [data-testid="stTabs"] button {
+            color: var(--soc-muted);
+            border: 1px solid transparent;
+            border-bottom: 2px solid transparent;
+            font-family: "Courier New", "Lucida Console", monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        [data-testid="stTabs"] button[aria-selected="true"] {
+            color: var(--soc-cyan);
+            border-color: var(--soc-border);
+            border-bottom-color: var(--soc-cyan);
+            background: rgba(0, 242, 254, 0.06);
+            box-shadow: 0 0 18px rgba(0, 242, 254, 0.12);
+        }
+        [data-testid="stForm"], [data-testid="stExpander"],
+        [data-testid="stTextArea"], [data-testid="stTextInput"] {
+            border: 1px solid var(--soc-border);
+            background: rgba(15, 23, 42, 0.76);
+            box-shadow: 0 0 18px rgba(0, 242, 254, 0.06);
+        }
+        [data-testid="stTextArea"] textarea, [data-testid="stTextInput"] input {
+            color: var(--soc-text);
+            background: #080C14;
+            border-color: var(--soc-border);
+        }
+        [data-testid="stButton"] button, [data-testid="stFormSubmitButton"] button {
+            border: 1px solid var(--soc-cyan);
+            color: var(--soc-cyan);
+            background: rgba(0, 242, 254, 0.06);
+            font-family: "Courier New", "Lucida Console", monospace;
+            box-shadow: 0 0 14px rgba(0, 242, 254, 0.14);
+        }
+        [data-testid="stButton"] button:hover, [data-testid="stFormSubmitButton"] button:hover {
+            color: #FFFFFF;
+            background: rgba(0, 242, 254, 0.16);
+            box-shadow: 0 0 22px rgba(0, 242, 254, 0.28);
+        }
+        .soc-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1.25rem 0; }
+        .soc-kpi-card {
+            min-height: 126px;
+            padding: 1.1rem 1.2rem;
+            background: linear-gradient(145deg, var(--soc-panel-raised), var(--soc-panel));
+            border: 1px solid var(--soc-border);
+            box-shadow: 0 0 18px rgba(0, 242, 254, 0.08);
+        }
+        .soc-kpi-label { color: var(--soc-muted); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
+        .soc-kpi-value { margin: 0.55rem 0 0.35rem; color: var(--soc-cyan); font-size: 2rem; font-weight: 700; }
+        .soc-kpi-value.high { color: var(--soc-emerald); text-shadow: 0 0 14px rgba(16, 185, 129, 0.5); }
+        .soc-kpi-value.critical { color: var(--soc-red); text-shadow: 0 0 14px rgba(239, 68, 68, 0.5); }
+        .soc-kpi-delta { color: var(--soc-muted); font-size: 0.72rem; }
+        .status-banner, .soc-panel {
+            border: 1px solid var(--soc-border);
+            background: rgba(15, 23, 42, 0.78);
+            box-shadow: 0 0 18px rgba(0, 242, 254, 0.07);
+            padding: 0.9rem 1rem;
+        }
+        .status-banner { border-left: 4px solid var(--soc-emerald); color: var(--soc-text); }
+        .tp-alert {
+            border: 1px solid rgba(239, 68, 68, 0.62);
+            border-left: 5px solid var(--soc-red);
+            background: rgba(69, 10, 10, 0.36);
+            box-shadow: 0 0 24px rgba(239, 68, 68, 0.18);
+            padding: 1rem 1.1rem;
+            animation: threat-pulse 1.8s ease-in-out infinite alternate;
+        }
+        .tp-ribbon { color: #FFFFFF; font-weight: 700; letter-spacing: 0.12em; }
+        .tp-technique { color: var(--soc-red); font-size: 1.3rem; font-weight: 700; }
+        .tp-severity { color: var(--soc-text); line-height: 1.6; }
+        .remediation-card {
+            border: 1px solid var(--soc-border);
+            background: rgba(17, 28, 49, 0.78);
+            padding: 0.75rem;
+            min-height: 92px;
+        }
+        @keyframes threat-pulse { from { box-shadow: 0 0 10px rgba(239, 68, 68, 0.12); } to { box-shadow: 0 0 28px rgba(239, 68, 68, 0.32); } }
+        @media (max-width: 900px) { .soc-kpi-grid { grid-template-columns: repeat(2, 1fr); } .block-container { padding: 1.5rem 1rem 3rem; } }
+        @media (max-width: 560px) { .soc-kpi-grid { grid-template-columns: 1fr; } }
     </style>
     """,
     unsafe_allow_html=True,
@@ -120,17 +223,29 @@ def _percentage(value: Any) -> str:
 
 
 def _render_metrics(metrics: dict[str, Any]) -> None:
-    st.subheader("Live Performance")
-    st.caption("Metrics are calculated from historical triage decisions with analyst labels.")
-    columns = st.columns(4)
+    st.subheader("Live Performance Matrix")
+    st.caption("Historical labeled decisions · FastAPI gateway :8000 · SQLite telemetry")
     cards = (
         ("Precision", "precision", "Threat Detection"),
         ("Recall", "recall", "Threat Coverage"),
         ("F1-Score", "f1_score", "Balanced Accuracy"),
         ("Deflection Rate", "deflection_rate", "False Alarms Cut"),
     )
-    for column, (label, key, delta) in zip(columns, cards):
-        column.metric(label, _percentage(metrics.get(key, 0.0)), delta)
+    card_markup = []
+    for label, key, delta in cards:
+        try:
+            ratio = float(metrics.get(key, 0.0))
+        except (TypeError, ValueError):
+            ratio = 0.0
+        tone = "high" if ratio >= 0.8 and key in {"precision", "deflection_rate"} else ""
+        if ratio < 0.5:
+            tone = "critical"
+        card_markup.append(
+            f'<div class="soc-kpi-card"><div class="soc-kpi-label">{escape(label)}</div>'
+            f'<div class="soc-kpi-value {tone}">{_percentage(ratio)}</div>'
+            f'<div class="soc-kpi-delta">↳ {escape(delta)}</div></div>'
+        )
+    st.markdown(f'<div class="soc-kpi-grid">{"".join(card_markup)}</div>', unsafe_allow_html=True)
 
     total = metrics.get("total_alerts", 0)
     st.markdown(
@@ -140,8 +255,8 @@ def _render_metrics(metrics: dict[str, Any]) -> None:
 
 
 def _render_feedback_form() -> None:
-    st.subheader("Analyst Override")
-    st.caption("Correct a prior decision so future triage prompts can learn from the review.")
+    st.subheader("Analyst Override Channel")
+    st.caption("Feed a reviewed decision back into the few-shot matrix for future triage.")
     with st.form("feedback_form", clear_on_submit=False):
         alert_id = st.text_input("Target Alert ID", placeholder="ALERT-BRUTE01")
         analyst_id = st.text_input("Analyst ID", value="soc-analyst")
@@ -175,8 +290,8 @@ def _render_feedback_form() -> None:
 
 
 def _render_playground() -> None:
-    st.subheader("Manual Ingestion Playground")
-    st.caption("Paste a RawAlert JSON payload and send it through the triage engine.")
+    st.subheader("Manual Ingestion Workbench")
+    st.caption("Submit a RawAlert payload to the SOC-L2 decision pipeline.")
     live_mode = st.sidebar.toggle(
         "Use live Gemini analysis",
         value=False,
@@ -216,22 +331,38 @@ def _render_playground() -> None:
     classification = result.get("classification", "UNKNOWN")
     is_true_positive = classification in {"TP", "TRUE_POSITIVE"}
     if is_true_positive:
-        st.error("TRUE POSITIVE · THREAT", icon="🚨")
+        st.markdown(
+            '<div class="tp-alert"><div class="tp-ribbon">⚠ MITRE ATT&CK DETECTED</div>'
+            '<div class="soc-kpi-delta">TRUE POSITIVE · ACTIVE THREAT SIGNAL</div></div>',
+            unsafe_allow_html=True,
+        )
     elif classification == "FP":
-        st.success("FALSE POSITIVE · NOISE", icon="✅")
+        st.markdown(
+            '<div class="soc-panel" style="border-left: 5px solid #10B981;">'
+            '<strong style="color:#10B981;">✓ FALSE POSITIVE · NOISE</strong>'
+            '<div class="soc-kpi-delta">Benign or approved activity profile</div></div>',
+            unsafe_allow_html=True,
+        )
     else:
         st.warning("UNRECOGNIZED CLASSIFICATION")
 
     left, right = st.columns((1, 2))
     with left:
-        st.metric("Confidence", _percentage(result.get("confidence", 0.0)))
-        st.write("**Recommended Action**")
+        st.markdown(
+            f'<div class="soc-kpi-card"><div class="soc-kpi-label">Decision Confidence</div>'
+            f'<div class="soc-kpi-value">{_percentage(result.get("confidence", 0.0))}</div></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown('<div class="soc-panel"><div class="soc-kpi-label">Recommended Action</div>', unsafe_allow_html=True)
         st.write(result.get("recommended_action", "Manual review required."))
+        st.markdown("</div>", unsafe_allow_html=True)
     with right:
-        st.write("**Reasoning**")
+        st.markdown('<div class="soc-panel"><div class="soc-kpi-label">Analyst Reasoning</div>', unsafe_allow_html=True)
         st.write(result.get("reasoning", "No reasoning returned."))
-        st.write("**MITRE ATT&CK Mapping**")
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown('<div class="soc-panel"><div class="soc-kpi-label">MITRE ATT&CK Tactics</div>', unsafe_allow_html=True)
         st.write(", ".join(result.get("mitre_tactics", [])) or "Not applicable")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if is_true_positive:
         technique_id = result.get("mitre_technique_id") or "Technique pending analyst validation"
@@ -243,21 +374,30 @@ def _render_playground() -> None:
         if not isinstance(remediation_steps, list):
             remediation_steps = []
 
-        st.error("Threat Intelligence Enrichment", icon="⚠️")
-        st.markdown(f"**MITRE ATT&CK Technique ID**\n\n`{technique_id}`")
-        st.info(
-            f"**Severity Justification**\n\n{severity_justification}",
-            icon="📌",
+        st.markdown(
+            f'<div class="tp-alert"><div class="soc-kpi-label">MITRE ATT&CK TECHNIQUE ID</div>'
+            f'<div class="tp-technique">{escape(str(technique_id))}</div>'
+            f'<div class="soc-kpi-label" style="margin-top:1rem;">SEVERITY JUSTIFICATION</div>'
+            f'<div class="tp-severity">{escape(str(severity_justification))}</div></div>',
+            unsafe_allow_html=True,
         )
 
-        st.write("**Immediate Remediation Checklist**")
+        st.markdown("### Immediate Remediation Checklist")
         alert_key = str(result.get("alert_id", "unknown-alert"))
         if remediation_steps:
-            for index, step in enumerate(remediation_steps[:3], start=1):
-                st.checkbox(
-                    f"Step {index}: {step}",
-                    key=f"remediation_{alert_key}_{index}",
-                )
+            checklist_columns = st.columns(min(len(remediation_steps[:3]), 3))
+            for index, (column, step) in enumerate(
+                zip(checklist_columns, remediation_steps[:3]),
+                start=1,
+            ):
+                with column:
+                    st.markdown('<div class="remediation-card">', unsafe_allow_html=True)
+                    st.checkbox(
+                        f"STEP {index}",
+                        key=f"remediation_{alert_key}_{index}",
+                    )
+                    st.caption(str(step))
+                    st.markdown("</div>", unsafe_allow_html=True)
         else:
             st.warning("No remediation steps were returned for this threat.")
 
@@ -265,8 +405,12 @@ def _render_playground() -> None:
 
 
 backend_metrics = _validate_backend()
-st.title("🛡️ AI-Powered Alert Triage Copilot")
-st.caption("SOC-L2 decision support with human feedback and deterministic resilience.")
+st.markdown(
+    '<div class="soc-kpi-label">NIGHTWATCH // SOC-L2 OPERATIONS CONSOLE</div>',
+    unsafe_allow_html=True,
+)
+st.title("AI-Powered Alert Triage Copilot")
+st.caption("LIVE TELEMETRY · HUMAN-IN-THE-LOOP · DETERMINISTIC RESILIENCE")
 
 analytics_tab, feedback_tab, playground_tab = st.tabs(
     ["📊 Analytics", "✍️ Analyst Feedback", "🧪 Triage Playground"]
