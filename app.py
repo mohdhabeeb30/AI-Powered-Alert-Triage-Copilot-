@@ -30,7 +30,7 @@ DEFAULT_ALERT = {
 }
 
 st.set_page_config(
-    page_title="Alert Triage Copilot",
+    page_title="Nightwatch SOC Console",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -40,22 +40,30 @@ st.markdown(
     """
     <style>
         :root {
-            --soc-black: #0A0E17;
-            --soc-panel: #0F172A;
-            --soc-panel-raised: #111C31;
+            --soc-black: #090E1A;
+            --soc-panel: #0D1524;
+            --soc-panel-raised: #111C2D;
             --soc-border: #1E293B;
-            --soc-cyan: #00F2FE;
+            --soc-cyan: #22D3EE;
             --soc-emerald: #10B981;
             --soc-red: #EF4444;
             --soc-amber: #F59E0B;
             --soc-text: #D7E3F4;
             --soc-muted: #7890AA;
         }
+        html, body, [class*="css"], button, input, textarea, select {
+            font-family: "Courier New", Monaco, "Lucida Console", monospace !important;
+        }
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
             background: var(--soc-black);
             color: var(--soc-text);
         }
-        .block-container { max-width: 1500px; padding: 2.5rem 3rem 4rem; }
+        .stApp {
+            background-image: linear-gradient(rgba(34, 211, 238, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 211, 238, 0.025) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .block-container { max-width: 1560px; padding: 1.2rem 2.4rem 4rem; }
         [data-testid="stSidebar"] {
             background: #080C14;
             border-right: 1px solid var(--soc-border);
@@ -71,8 +79,8 @@ st.markdown(
         .stMarkdown, [data-testid="stText"], label, p, li {
             color: var(--soc-text);
         }
-        h1, h2, h3 { letter-spacing: 0.06em; color: #F4F8FF; }
-        h1 { text-transform: uppercase; text-shadow: 0 0 22px rgba(0, 242, 254, 0.22); }
+        h1, h2, h3 { letter-spacing: 0.08em; color: #F8FAFC; text-transform: uppercase; }
+        h1 { font-size: clamp(1.7rem, 3vw, 3rem); line-height: 1.1; text-shadow: 0 0 24px rgba(34, 211, 238, 0.22); }
         [data-testid="stTabs"] [role="tablist"] {
             gap: 0.4rem;
             border-bottom: 1px solid var(--soc-border);
@@ -89,40 +97,47 @@ st.markdown(
             color: var(--soc-cyan);
             border-color: var(--soc-border);
             border-bottom-color: var(--soc-cyan);
-            background: rgba(0, 242, 254, 0.06);
-            box-shadow: 0 0 18px rgba(0, 242, 254, 0.12);
+            background: rgba(34, 211, 238, 0.08);
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.14);
         }
         [data-testid="stForm"], [data-testid="stExpander"],
-        [data-testid="stTextArea"], [data-testid="stTextInput"] {
+        [data-testid="stTextArea"], [data-testid="stTextInput"],
+        [data-testid="stSelectbox"], [data-testid="stRadio"], [data-testid="stCheckbox"],
+        [data-testid="stDataFrame"] {
             border: 1px solid var(--soc-border);
             background: rgba(15, 23, 42, 0.76);
             box-shadow: 0 0 18px rgba(0, 242, 254, 0.06);
         }
-        [data-testid="stTextArea"] textarea, [data-testid="stTextInput"] input {
+        [data-testid="stTextArea"] textarea, [data-testid="stTextInput"] input,
+        [data-baseweb="select"] > div, [data-baseweb="textarea"] {
             color: var(--soc-text);
             background: #080C14;
             border-color: var(--soc-border);
+            border-radius: 0;
         }
         [data-testid="stButton"] button, [data-testid="stFormSubmitButton"] button {
             border: 1px solid var(--soc-cyan);
             color: var(--soc-cyan);
-            background: rgba(0, 242, 254, 0.06);
+            background: rgba(34, 211, 238, 0.07);
             font-family: "Courier New", "Lucida Console", monospace;
-            box-shadow: 0 0 14px rgba(0, 242, 254, 0.14);
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.14);
         }
         [data-testid="stButton"] button:hover, [data-testid="stFormSubmitButton"] button:hover {
             color: #FFFFFF;
-            background: rgba(0, 242, 254, 0.16);
-            box-shadow: 0 0 22px rgba(0, 242, 254, 0.28);
+            background: rgba(34, 211, 238, 0.18);
+            box-shadow: 0 0 25px rgba(34, 211, 238, 0.3);
         }
-        .soc-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1.25rem 0; }
+        .soc-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.8rem; margin: 1rem 0 1.4rem; }
         .soc-kpi-card {
-            min-height: 126px;
+            min-height: 128px;
             padding: 1.1rem 1.2rem;
             background: linear-gradient(145deg, var(--soc-panel-raised), var(--soc-panel));
             border: 1px solid var(--soc-border);
-            box-shadow: 0 0 18px rgba(0, 242, 254, 0.08);
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.11);
+            position: relative;
+            overflow: hidden;
         }
+        .soc-kpi-card::after { content: ""; position: absolute; width: 80px; height: 80px; right: -34px; bottom: -40px; border: 1px solid rgba(34, 211, 238, 0.2); transform: rotate(45deg); }
         .soc-kpi-label { color: var(--soc-muted); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
         .soc-kpi-value { margin: 0.55rem 0 0.35rem; color: var(--soc-cyan); font-size: 2rem; font-weight: 700; }
         .soc-kpi-value.high { color: var(--soc-emerald); text-shadow: 0 0 14px rgba(16, 185, 129, 0.5); }
@@ -134,6 +149,16 @@ st.markdown(
             box-shadow: 0 0 18px rgba(0, 242, 254, 0.07);
             padding: 0.9rem 1rem;
         }
+        .console-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; border-bottom: 1px solid var(--soc-border); padding-bottom: 1.2rem; margin-bottom: 1rem; }
+        .eyebrow, .soc-label { color: var(--soc-cyan); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+        .header-status { color: var(--soc-emerald); font-size: 0.68rem; letter-spacing: 0.1em; white-space: nowrap; }
+        .header-status::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 0.5rem; background: var(--soc-emerald); box-shadow: 0 0 9px var(--soc-emerald); }
+        .console-strap { color: var(--soc-muted); font-size: 0.73rem; letter-spacing: 0.08em; }
+        .section-rule { display: flex; align-items: center; gap: 0.8rem; margin: 1.25rem 0 0.7rem; color: var(--soc-muted); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; }
+        .section-rule::after { content: ""; height: 1px; flex: 1; background: var(--soc-border); }
+        .sidebar-readout { border: 1px solid var(--soc-border); padding: 0.8rem; margin: 0.8rem 0; background: rgba(13, 21, 36, 0.9); box-shadow: 0 0 18px rgba(34, 211, 238, 0.11); }
+        .sidebar-value { color: var(--soc-text); font-size: 0.78rem; margin-top: 0.3rem; }
+        .remediation-card [data-testid="stCheckbox"] { border: 0; box-shadow: none; background: transparent; padding: 0; }
         .status-banner { border-left: 4px solid var(--soc-emerald); color: var(--soc-text); }
         .tp-alert {
             border: 1px solid rgba(239, 68, 68, 0.62);
@@ -153,7 +178,7 @@ st.markdown(
             min-height: 92px;
         }
         @keyframes threat-pulse { from { box-shadow: 0 0 10px rgba(239, 68, 68, 0.12); } to { box-shadow: 0 0 28px rgba(239, 68, 68, 0.32); } }
-        @media (max-width: 900px) { .soc-kpi-grid { grid-template-columns: repeat(2, 1fr); } .block-container { padding: 1.5rem 1rem 3rem; } }
+        @media (max-width: 900px) { .soc-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .block-container { padding: 1rem 1rem 3rem; } .console-header { align-items: flex-start; flex-direction: column; } }
         @media (max-width: 560px) { .soc-kpi-grid { grid-template-columns: 1fr; } }
     </style>
     """,
@@ -223,7 +248,7 @@ def _percentage(value: Any) -> str:
 
 
 def _render_metrics(metrics: dict[str, Any]) -> None:
-    st.subheader("Live Performance Matrix")
+    st.markdown('<div class="section-rule">01 // telemetry performance matrix</div>', unsafe_allow_html=True)
     st.caption("Historical labeled decisions · FastAPI gateway :8000 · SQLite telemetry")
     cards = (
         ("Precision", "precision", "Threat Detection"),
@@ -255,7 +280,7 @@ def _render_metrics(metrics: dict[str, Any]) -> None:
 
 
 def _render_feedback_form() -> None:
-    st.subheader("Analyst Override Channel")
+    st.markdown('<div class="section-rule">02 // analyst override channel</div>', unsafe_allow_html=True)
     st.caption("Feed a reviewed decision back into the few-shot matrix for future triage.")
     with st.form("feedback_form", clear_on_submit=False):
         alert_id = st.text_input("Target Alert ID", placeholder="ALERT-BRUTE01")
@@ -290,7 +315,7 @@ def _render_feedback_form() -> None:
 
 
 def _render_playground() -> None:
-    st.subheader("Manual Ingestion Workbench")
+    st.markdown('<div class="section-rule">03 // incident ingestion workbench</div>', unsafe_allow_html=True)
     st.caption("Submit a RawAlert payload to the SOC-L2 decision pipeline.")
     live_mode = st.sidebar.toggle(
         "Use live Gemini analysis",
@@ -332,8 +357,8 @@ def _render_playground() -> None:
     is_true_positive = classification in {"TP", "TRUE_POSITIVE"}
     if is_true_positive:
         st.markdown(
-            '<div class="tp-alert"><div class="tp-ribbon">⚠ MITRE ATT&CK DETECTED</div>'
-            '<div class="soc-kpi-delta">TRUE POSITIVE · ACTIVE THREAT SIGNAL</div></div>',
+            '<div class="tp-alert"><div class="tp-ribbon">🚨 CRITICAL MITRE ATT&CK THREAT ENRICHMENT IDENTIFIED</div>'
+            '<div class="soc-kpi-delta">TRUE POSITIVE · ACTIVE THREAT SIGNAL · L2 ESCALATION REQUIRED</div></div>',
             unsafe_allow_html=True,
         )
     elif classification == "FP":
@@ -382,7 +407,7 @@ def _render_playground() -> None:
             unsafe_allow_html=True,
         )
 
-        st.markdown("### Immediate Remediation Checklist")
+        st.markdown('<div class="section-rule">remediation protocol // operator acknowledgement</div>', unsafe_allow_html=True)
         alert_key = str(result.get("alert_id", "unknown-alert"))
         if remediation_steps:
             checklist_columns = st.columns(min(len(remediation_steps[:3]), 3))
@@ -406,11 +431,21 @@ def _render_playground() -> None:
 
 backend_metrics = _validate_backend()
 st.markdown(
-    '<div class="soc-kpi-label">NIGHTWATCH // SOC-L2 OPERATIONS CONSOLE</div>',
+    '<div class="console-header"><div><div class="eyebrow">NIGHTWATCH // SOC-L2 OPERATIONS CONSOLE</div>'
+    '<div class="console-strap">AI-POWERED ALERT TRIAGE COPILOT / COMMAND CHANNEL 8000</div></div>'
+    '<div class="header-status">FASTAPI LINK ESTABLISHED</div></div>',
     unsafe_allow_html=True,
 )
 st.title("AI-Powered Alert Triage Copilot")
 st.caption("LIVE TELEMETRY · HUMAN-IN-THE-LOOP · DETERMINISTIC RESILIENCE")
+
+st.sidebar.markdown('<div class="eyebrow">NIGHTWATCH // CONTROL PLANE</div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    '<div class="sidebar-readout"><div class="soc-label">SYSTEM STATE</div><div class="sidebar-value">● OPERATIONAL</div></div>'
+    '<div class="sidebar-readout"><div class="soc-label">TELEMETRY SOURCE</div><div class="sidebar-value">SQLITE / FASTAPI</div></div>'
+    '<div class="sidebar-readout"><div class="soc-label">DECISION TIER</div><div class="sidebar-value">SOC-L2 TRIAGE</div></div>',
+    unsafe_allow_html=True,
+)
 
 analytics_tab, feedback_tab, playground_tab = st.tabs(
     ["📊 Analytics", "✍️ Analyst Feedback", "🧪 Triage Playground"]
